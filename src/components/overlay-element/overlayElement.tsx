@@ -1,6 +1,5 @@
-import { ElementInitialType, ElementPositionType } from "@/pages";
-import Image from "next/image";
-import React, { RefObject, useEffect, useMemo, useRef, useState } from "react";
+import { ElementInitialType, PartialElementPositionType } from "@/pages";
+import React, { RefObject, useEffect, useState } from "react";
 import { Rnd } from "react-rnd";
 
 const styles = {
@@ -17,7 +16,7 @@ const OverlayElement = ({
   updateCurrentSelectedElement,
 }: {
   element: ElementInitialType;
-  updatePosition: (positionConfiguration: ElementPositionType) => void;
+  updatePosition: (positionConfiguration: PartialElementPositionType) => void;
   parentContainerRef: RefObject<HTMLDivElement>;
   currentSelectedElement: string;
   updateCurrentSelectedElement: (id: string) => void;
@@ -49,8 +48,8 @@ const OverlayElement = ({
       }}
       onResizeStop={(e, direction, ref, delta, position) => {
         updatePosition({
-          width: ref.style.width,
-          height: ref.style.height,
+          width: +ref.style.width.replace("px", ""),
+          height: +ref.style.height.replace("px", ""),
           x: position.x,
           y: position.y,
         });

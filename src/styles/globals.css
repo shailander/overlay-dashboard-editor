@@ -6,6 +6,9 @@ body {
   margin: 0px;
 }
 
-button:disabled {
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
   cursor: not-allowed;
 }

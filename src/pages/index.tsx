@@ -5,14 +5,22 @@ import { useEffect, useRef, useState } from "react";
 export type ElementPositionType = {
   x: number;
   y: number;
-  height?: string;
-  width?: string;
+  height: number;
+  width: number;
 };
+
+export type PartialElementPositionType = Partial<
+  Pick<ElementPositionType, "height" | "width">
+> &
+  Pick<ElementPositionType, "x" | "y">;
 
 export interface ElementInitialType extends ElementPositionType {
   name: string;
   id: string;
 }
+
+const ScaleToHeight = 1080;
+const ScaleToWidth = 1920;
 
 const Index = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -26,26 +34,17 @@ const Index = () => {
     [id: string]: ElementPositionType;
   }>({});
 
-  const addElement = (name: string) => {
-    const id = name.replaceAll(" ", "_").toLowerCase();
-    const elementInfo = {
-      name,
-      id,
-      height: "200px",
-      width: "320px",
-      x: elements.length * 320,
-      y: 0,
-    };
+  const addElement = (element: ElementInitialType) => {
     elementsConfigurations.current = {
       ...elementsConfigurations.current,
-      [id]: {
-        height: "200px",
-        width: "320px",
-        x: elements.length * 100,
-        y: 0,
+      [element.id]: {
+        height: element.height,
+        width: element.width,
+        x: element.x,
+        y: element.y,
       },
     };
-    const elementsList = [...elements, elementInfo];
+    const elementsList = [...elements, element];
     setElements(elementsList);
   };
 
@@ -67,7 +66,7 @@ const Index = () => {
 
   const updatePosition = (
     id: string,
-    positionConfiguration: ElementPositionType
+    positionConfiguration: PartialElementPositionType
   ) => {
     const updatedElementsConfigurations = {
       ...elementsConfigurations.current,
@@ -80,9 +79,34 @@ const Index = () => {
   };
 
   const submitElementConfigurations = () => {
+    const parentContainerWidth = containerRef.current?.offsetWidth;
+    const parentContainerheight = containerRef.current?.offsetHeight;
+    const elementsConfigurationsUpdated = Object.keys(
+      elementsConfigurations.current
+    ).reduce((acc, key) => {
+      const element = elementsConfigurations.current[key];
+      const x = (element.x / parentContainerWidth!) * ScaleToWidth + "px";
+      const y = (element.y / parentContainerheight!) * ScaleToHeight + "px";
+      const height =
+        ((element.height ? element.height : 0) / parentContainerheight!) *
+          ScaleToHeight +
+        "px";
+      const width =
+        ((element.width ? element.width : 0) / parentContainerWidth!) *
+          ScaleToWidth +
+        "px";
+      acc[key] = {
+        ...element,
+        x,
+        y,
+        height,
+        width,
+      };
+      return acc;
+    }, {} as { [id: string]: { x: string; y: string; height: string; width: string } });
     console.log(
       "SUBMISSION ===============>>>>",
-      elementsConfigurations.current
+      elementsConfigurationsUpdated
     );
   };
 
@@ -103,14 +127,14 @@ const Index = () => {
         onSubmit={submitElementConfigurations}
         onRemove={removeElement}
       />
-      <div ref={containerRef} className="flex-1 h-full bg-gray-200">
+      <div ref={containerRef} className="w-full h-fit bg-gray-200 aspect-video">
         {elements.map((element) => (
           <OverlayElement
             key={element.id}
             element={element}
-            updatePosition={(positionConfiguration: ElementPositionType) =>
-              updatePosition(element.id, positionConfiguration)
-            }
+            updatePosition={(
+              positionConfiguration: PartialElementPositionType
+            ) => updatePosition(element.id, positionConfiguration)}
             parentContainerRef={containerRef}
             currentSelectedElement={currentSelectedElement}
             updateCurrentSelectedElement={(id: string) =>
