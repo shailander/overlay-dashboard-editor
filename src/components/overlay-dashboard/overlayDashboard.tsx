@@ -32,27 +32,19 @@ const OverlayDashboard = ({
   addElement,
   onSubmit,
   onRemove,
+  elementsList,
 }: {
-  addElement: (element: ElementInitialType) => void;
+  addElement: (elementId: string) => void;
   onSubmit: () => void;
   onRemove: () => void;
+  elementsList: ElementInitialType[];
 }) => {
-  const [elementOptionsList, setElementOptionsList] =
-    useState<ElementInitialType[]>(ElemetsOptions);
-
   const handleAddElement = (e: ChangeEvent<HTMLSelectElement>) => {
-    const selectedElement = e.currentTarget.value;
-    const currentElementFiltered = elementOptionsList.filter(
-      (element) => element.id === selectedElement
-    )[0];
-    if (currentElementFiltered) {
-      addElement(currentElementFiltered);
-    }
-    const leftElementList = elementOptionsList.filter(
-      (element) => element.id !== selectedElement
-    );
-    setElementOptionsList(leftElementList);
+    const selectedElementId = e.currentTarget.value;
+    addElement(selectedElementId);
   };
+
+  const leftElementsToAdd = elementsList?.filter((element) => !element.show);
 
   return (
     <div className="w-80 min-w-[20rem] bg-gray-500 flex flex-col items-center py-4">
@@ -65,16 +57,18 @@ const OverlayDashboard = ({
         className="border-2 border-black my-2 w-3/4 text-xl p-2 text-center"
         value={""}
         onChange={handleAddElement}
-        disabled={!elementOptionsList.length}
+        disabled={!leftElementsToAdd.length}
       >
         <option disabled value="">
           Add Element
         </option>
-        {elementOptionsList.map((element) => (
-          <option key={element.id} value={element.id}>
-            {element.name}
-          </option>
-        ))}
+        {elementsList.map((element) =>
+          element.show ? null : (
+            <option key={element.id} value={element.id}>
+              {element.name}
+            </option>
+          )
+        )}
       </select>
       {/* <button
         className="p-2 bg-blue-400 border-2 border-black"

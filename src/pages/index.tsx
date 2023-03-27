@@ -17,7 +17,38 @@ export type PartialElementPositionType = Partial<
 export interface ElementInitialType extends ElementPositionType {
   name: string;
   id: string;
+  show: boolean;
 }
+
+const ElemetsOptions = [
+  {
+    name: "Chat Box",
+    id: "chat_box",
+    height: 200,
+    width: 320,
+    x: 320,
+    y: 0,
+    show: false,
+  },
+  {
+    name: "Featured Chat",
+    id: "featured_chat",
+    height: 200,
+    width: 320,
+    x: 320 * 2,
+    y: 0,
+    show: false,
+  },
+  {
+    name: "Subscriber Alert",
+    id: "subscriber_alert",
+    height: 200,
+    width: 320,
+    x: 320 * 2,
+    y: 0,
+    show: false,
+  },
+];
 
 const ScaleToHeight = 1080;
 const ScaleToWidth = 1920;
@@ -25,7 +56,8 @@ const ScaleToWidth = 1920;
 const Index = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const [elements, setElements] = useState<ElementInitialType[] | []>([]);
+  const [elements, setElements] =
+    useState<ElementInitialType[]>(ElemetsOptions);
 
   const [currentSelectedElement, setCurrentSelectedElement] =
     useState<string>("");
@@ -34,24 +66,41 @@ const Index = () => {
     [id: string]: ElementPositionType;
   }>({});
 
-  const addElement = (element: ElementInitialType) => {
+  const addElement = (elementId: string) => {
+    const selectedElement = elements.find(
+      (element) => element.id === elementId
+    )!;
     elementsConfigurations.current = {
       ...elementsConfigurations.current,
-      [element.id]: {
-        height: element.height,
-        width: element.width,
-        x: element.x,
-        y: element.y,
+      [selectedElement.id]: {
+        height: selectedElement.height,
+        width: selectedElement.width,
+        x: selectedElement.x,
+        y: selectedElement.y,
       },
     };
-    const elementsList = [...elements, element];
-    setElements(elementsList);
+    const updatedElementList = elements.map((element) => {
+      if (element.id === selectedElement.id) {
+        return {
+          ...element,
+          show: true,
+        };
+      }
+      return element;
+    });
+    setElements(updatedElementList);
   };
 
   const removeElement = () => {
-    const updatedElementList = elements.filter(
-      (element) => element.id !== currentSelectedElement
-    );
+    const updatedElementList = elements.map((element) => {
+      if (element.id === currentSelectedElement) {
+        return {
+          ...element,
+          show: false,
+        };
+      }
+      return element;
+    });
     const elementsConfigurationsUpdated = Object.keys(
       elementsConfigurations.current
     ).reduce((acc, key) => {
@@ -126,22 +175,25 @@ const Index = () => {
         addElement={addElement}
         onSubmit={submitElementConfigurations}
         onRemove={removeElement}
+        elementsList={elements}
       />
       <div ref={containerRef} className="w-full h-fit bg-gray-200 aspect-video">
-        {elements.map((element) => (
-          <OverlayElement
-            key={element.id}
-            element={element}
-            updatePosition={(
-              positionConfiguration: PartialElementPositionType
-            ) => updatePosition(element.id, positionConfiguration)}
-            parentContainerRef={containerRef}
-            currentSelectedElement={currentSelectedElement}
-            updateCurrentSelectedElement={(id: string) =>
-              setCurrentSelectedElement(id)
-            }
-          />
-        ))}
+        {elements.map((element) =>
+          element.show ? (
+            <OverlayElement
+              key={element.id}
+              element={element}
+              updatePosition={(
+                positionConfiguration: PartialElementPositionType
+              ) => updatePosition(element.id, positionConfiguration)}
+              parentContainerRef={containerRef}
+              currentSelectedElement={currentSelectedElement}
+              updateCurrentSelectedElement={(id: string) =>
+                setCurrentSelectedElement(id)
+              }
+            />
+          ) : null
+        )}
       </div>
     </div>
   );
