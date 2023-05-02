@@ -1,5 +1,6 @@
 import OverlayDashboard from "@/components/overlay-dashboard/overlayDashboard";
 import OverlayElement from "@/components/overlay-element/overlayElement";
+import { debounce, throttle } from "@/utils/rateLimitingEvents";
 import { useEffect, useRef, useState } from "react";
 
 export type ElementPositionType = {
@@ -61,6 +62,11 @@ const Index = () => {
 
   const [currentSelectedElement, setCurrentSelectedElement] =
     useState<string>("");
+
+  const [screenSize, setScreenSize] = useState({
+    height: 0,
+    width: 0,
+  });
 
   const elementsConfigurations = useRef<{
     [id: string]: ElementPositionType;
@@ -160,12 +166,23 @@ const Index = () => {
   };
 
   useEffect(() => {
+    const width = containerRef.current?.offsetWidth ?? 0;
+    const height = containerRef.current?.offsetHeight ?? 0;
+    setScreenSize({ width, height });
     const handler = (event: MouseEvent) => {
       setCurrentSelectedElement("");
     };
     document.addEventListener("mousedown", handler);
+    const resize = () => {
+      const width = containerRef.current?.offsetWidth ?? 0;
+      const height = containerRef.current?.offsetHeight ?? 0;
+      setScreenSize({ width, height });
+    };
+    const resizeThrottle = debounce(resize, 200);
+    window.addEventListener("resize", resizeThrottle);
     return () => {
       document.removeEventListener("mousedown", handler);
+      window.removeEventListener("resize", resizeThrottle);
     };
   }, []);
 
@@ -177,7 +194,10 @@ const Index = () => {
         onRemove={removeElement}
         elementsList={elements}
       />
-      <div ref={containerRef} className="w-full h-fit bg-gray-200 aspect-video">
+      <div
+        ref={containerRef}
+        className="w-full h-fit bg-gray-200 aspect-video relative"
+      >
         {elements.map((element) =>
           element.show ? (
             <OverlayElement
@@ -191,6 +211,7 @@ const Index = () => {
               updateCurrentSelectedElement={(id: string) =>
                 setCurrentSelectedElement(id)
               }
+              screenSize={screenSize}
             />
           ) : null
         )}
